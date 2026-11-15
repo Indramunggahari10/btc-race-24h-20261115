@@ -23,13 +23,13 @@ const BPS = 10000n;
 // Buy triggers: (lookback bars, drop in bps, bounce off the lookback low in bps)
 const TRIGGERS = [
   { lookback: 20, dropBps: 100n, bounceBps: 40n },
-  { lookback: 10, dropBps: 100n, bounceBps: 20n },
+  { lookback: 10, dropBps: 100n, bounceBps: 10n },
 ] as const;
 // Fallback trigger, armed only late in the window when nothing has traded
 // yet, so a quiet race window still meets the >=1 trade guardrail.
 const FALLBACK = { armSeq: 1080, lookback: 10, dropBps: 40n, bounceBps: 20n } as const;
 
-const TAKE_PROFIT_BPS = 200n; // sell when the close is +200 bps over the fill price
+const TAKE_PROFIT_BPS = 250n; // sell when the close is +250 bps over the fill price
 const HARD_STOP_BPS = 400n; // sell when the close is -400 bps under the fill price
 const MAX_HOLD_BARS = 480; // sell after 480 bars held, whatever the price
 const MAX_SLIPPAGE_BPS = 300; // fills land at the next open; 1m moves are ~12 bps sd
