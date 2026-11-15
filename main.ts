@@ -23,7 +23,7 @@ const BPS = 10000n;
 // Buy triggers: (lookback bars, drop in bps, bounce off the lookback low in bps)
 const TRIGGERS = [
   { lookback: 20, dropBps: 100n, bounceBps: 40n },
-  { lookback: 10, dropBps: 100n, bounceBps: 10n },
+  { lookback: 10, dropBps: 100n, bounceBps: 20n },
 ] as const;
 // Fallback trigger, armed only late in the window when nothing has traded
 // yet, so a quiet race window still meets the >=1 trade guardrail.
