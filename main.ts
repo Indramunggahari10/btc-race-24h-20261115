@@ -32,6 +32,7 @@ const FALLBACK = { armSeq: 1080, lookback: 10, dropBps: 40n, bounceBps: 20n } as
 const TAKE_PROFIT_BPS = 200n; // sell when the close is +200 bps over the fill price
 const HARD_STOP_BPS = 400n; // sell when the close is -400 bps under the fill price
 const MAX_HOLD_BARS = 480; // sell after 480 bars held, whatever the price
+const WARMUP_BARS = 25; // closes to collect before any buy is considered, so the lookback windows are full and the dip math is meaningful
 const MAX_SLIPPAGE_BPS = 300; // fills land at the next open; 1m moves are ~12 bps sd
 const REENTRY_COOLDOWN_BARS = 60; // bars to wait after a sell before buying again, so a fresh snap-back is not chased straight back into the same dip
 
@@ -91,6 +92,7 @@ await runBars({
     }
 
     if (qty === 0n && state.cash > 0n && batch.seq - lastSellBar >= REENTRY_COOLDOWN_BARS) {
+      if (closes.length < WARMUP_BARS) return []; // warm-up: no buy until the lookbacks are full
       for (const t of TRIGGERS) {
         if (dipAndBounce(close, t.lookback, t.dropBps, t.bounceBps)) {
           return [{ side: 'buy', symbol: SYMBOL, notional_quote_units: state.cash, max_slippage_bps: MAX_SLIPPAGE_BPS }];
