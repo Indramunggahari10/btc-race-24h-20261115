@@ -33,11 +33,13 @@ const TAKE_PROFIT_BPS = 200n; // sell when the close is +200 bps over the fill p
 const HARD_STOP_BPS = 400n; // sell when the close is -400 bps under the fill price
 const MAX_HOLD_BARS = 480; // sell after 480 bars held, whatever the price
 const MAX_SLIPPAGE_BPS = 300; // fills land at the next open; 1m moves are ~12 bps sd
+const REENTRY_COOLDOWN_BARS = 60; // bars to wait after a sell before buying again, so a fresh snap-back is not chased straight back into the same dip
 
 const closes: bigint[] = [];
 let entryPrice: bigint | null = null; // fill price of the open position
 let entryBar = -1; // fill_bar of the buy that opened it
 let everFilled = false; // any fill this run (buy or sell)
+let lastSellBar = -1; // fill_bar of the most recent sell fill
 
 function bpsChange(now: bigint, ref: bigint): bigint {
   return ((now - ref) * BPS) / ref;
@@ -71,6 +73,7 @@ await runBars({
       } else if (fill.side === 'sell') {
         entryPrice = null;
         entryBar = -1;
+        lastSellBar = fill.fill_bar;
       }
     }
 
@@ -87,7 +90,7 @@ await runBars({
       return [];
     }
 
-    if (qty === 0n && state.cash > 0n) {
+    if (qty === 0n && state.cash > 0n && batch.seq - lastSellBar >= REENTRY_COOLDOWN_BARS) {
       for (const t of TRIGGERS) {
         if (dipAndBounce(close, t.lookback, t.dropBps, t.bounceBps)) {
           return [{ side: 'buy', symbol: SYMBOL, notional_quote_units: state.cash, max_slippage_bps: MAX_SLIPPAGE_BPS }];
